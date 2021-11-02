@@ -164,7 +164,7 @@ func Error(s string) {
 }
 
 func ErrorE(e error) {
-	Error(e.String())
+	Error(e.Error())
 }
 
 func (ld logData) Crit(s string) {

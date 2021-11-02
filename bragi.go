@@ -14,8 +14,8 @@ var (
 	human  = log.New(os.Stdout, "", 0)
 	json   = log.New(os.Stdout, "", 0)
 	folder string
-	prefix string
-	level  = Level(1)
+	prefix = "Default"
+	level  = Level(0)
 )
 
 type Level int
@@ -31,6 +31,10 @@ const (
 
 func (l Level) String() string {
 	return []string{"Debug", "Info", "Notice", "Warning", "Error", "Crit"}[l]
+}
+
+func SetPrefix(p string) {
+	prefix = p
 }
 
 func SetOutputFolder(path string) func() {
@@ -162,10 +166,19 @@ func Error(s string) {
 func (ld logData) Crit(s string) {
 	ld.level = CRIT
 	ld.Print(s)
+	os.Exit(1)
 }
 
 func Crit(s string) {
 	AddError(nil).Crit(s)
+}
+
+func (ld logData) Fatal(s string) {
+	ld.Crit(s)
+}
+
+func Fatal(s string) {
+	AddError(nil).Fatal(s)
 }
 
 func fileExists(path string) bool {

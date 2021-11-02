@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	log "github.com/Cantara/bragi"
+	log "github.com/cantara/bragi"
 )
 
 func main() {

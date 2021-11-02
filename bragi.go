@@ -76,7 +76,7 @@ type logData struct {
 }
 
 func AddError(e error) logData {
-	return logData{err: e}
+	return logData{err: e, level: INFO}
 }
 
 type Stringer interface {
@@ -132,6 +132,10 @@ func (ld logData) Println(a ...interface{}) {
 		return
 	}
 	json.Println(jsonString)
+}
+
+func Println(a ...interface{}) {
+	AddError(nil).Println(a)
 }
 
 func (ld logData) Debug(a ...interface{}) {
@@ -195,6 +199,10 @@ func (ld logData) Fatal(a ...interface{}) {
 
 func Fatal(a ...interface{}) {
 	AddError(nil).Fatal(a)
+}
+
+func Fatalf(format string, a ...interface{}) {
+	Fatal(fmt.Sprintf(format, a)) // Tmp until i need more
 }
 
 func fileExists(path string) bool {

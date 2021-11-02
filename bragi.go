@@ -122,7 +122,7 @@ func (ld logData) Print(a ...interface{}) {
 	json.Print(jsonString)
 }
 
-func (ls logData) Println(a ...interface{}) {
+func (ld logData) Println(a ...interface{}) {
 	if level > ld.level {
 		return
 	}

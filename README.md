@@ -10,7 +10,7 @@ To log to file add the following
 ```go
 log.SetPrefix("vili")
 cloaser := log.SetOutputFolder(logDir)
-if cloaser != nil {
+if cloaser == nil {
 	log.Fatal("Unable to sett logdir")
 }
 defer cloaser()

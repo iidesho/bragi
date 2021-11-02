@@ -163,6 +163,10 @@ func Error(s string) {
 	AddError(nil).Error(s)
 }
 
+func ErrorE(e error) {
+	Error(e.String())
+}
+
 func (ld logData) Crit(s string) {
 	ld.level = CRIT
 	ld.Print(s)

@@ -79,6 +79,10 @@ func AddError(e error) logData {
 	return logData{err: e}
 }
 
+type Stringer interface {
+	String() string
+}
+
 func (ld logData) format(s string) (human, json string) {
 	human = time.Now().Format("15:04:05 MST")
 	json = fmt.Sprintf(`{"time":"%s"`, time.Now().Format("15:04:05 MST"))
@@ -106,11 +110,11 @@ func (ld logData) format(s string) (human, json string) {
 	return
 }
 
-func (ld logData) Print(s string) {
+func (ld logData) Print(a ...interface{}) {
 	if level > ld.level {
 		return
 	}
-	humanString, jsonString := ld.format(s)
+	humanString, jsonString := ld.format(fmt.Sprint(a))
 	human.Printf("%s\n", humanString)
 	if folder == "" && false {
 		return
@@ -118,71 +122,67 @@ func (ld logData) Print(s string) {
 	json.Printf("%s\n", jsonString)
 }
 
-func (ld logData) Debug(s string) {
+func (ld logData) Debug(a ...interface{}) {
 	ld.level = DEBUG
-	ld.Print(s)
+	ld.Print(a)
 }
 
-func Debug(s string) {
-	AddError(nil).Debug(s)
+func Debug(a ...interface{}) {
+	AddError(nil).Debug(a)
 }
 
-func (ld logData) Info(s string) {
+func (ld logData) Info(a ...interface{}) {
 	ld.level = INFO
-	ld.Print(s)
+	ld.Print(a)
 }
 
-func Info(s string) {
-	AddError(nil).Info(s)
+func Info(a ...interface{}) {
+	AddError(nil).Info(a)
 }
 
-func (ld logData) Notice(s string) {
+func (ld logData) Notice(a ...interface{}) {
 	ld.level = NOTICE
-	ld.Print(s)
+	ld.Print(a)
 }
 
-func Notice(s string) {
-	AddError(nil).Notice(s)
+func Notice(a ...interface{}) {
+	AddError(nil).Notice(a)
 }
 
-func (ld logData) Warning(s string) {
+func (ld logData) Warning(a ...interface{}) {
 	ld.level = WARNING
-	ld.Print(s)
+	ld.Print(a)
 }
 
-func Warning(s string) {
-	AddError(nil).Warning(s)
+func Warning(a ...interface{}) {
+	AddError(nil).Warning(a)
 }
 
-func (ld logData) Error(s string) {
+func (ld logData) Error(a ...interface{}) {
 	ld.level = ERROR
-	ld.Print(s)
+	ld.Print(a)
 }
 
-func Error(s string) {
-	AddError(nil).Error(s)
+func Error(a ...interface{}) {
+	AddError(nil).Error(a)
 }
 
-func ErrorE(e error) {
-	Error(e.Error())
-}
-
-func (ld logData) Crit(s string) {
+func (ld logData) Crit(a ...interface{}) {
 	ld.level = CRIT
-	ld.Print(s)
+	ld.Print(a)
 	os.Exit(1)
 }
 
-func Crit(s string) {
-	AddError(nil).Crit(s)
+func Crit(a ...interface{}) {
+	AddError(nil).Crit(a)
 }
 
-func (ld logData) Fatal(s string) {
-	ld.Crit(s)
+func (ld logData) Fatal(a ...interface{}) {
+	ld.Crit(a)
 }
 
-func Fatal(s string) {
-	AddError(nil).Fatal(s)
+func Fatal(a ...interface{}) {
+	AddError(nil).Fatal(a)
 }
 
 func fileExists(path string) bool {

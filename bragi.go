@@ -114,7 +114,7 @@ func (ld logData) Print(a ...interface{}) {
 	if level > ld.level {
 		return
 	}
-	humanString, jsonString := ld.format(fmt.Sprint(a))
+	humanString, jsonString := ld.format(fmt.Sprint(a...))
 	human.Print(humanString)
 	if folder == "" && false {
 		return
@@ -123,18 +123,18 @@ func (ld logData) Print(a ...interface{}) {
 }
 
 func (ld logData) Printf(format string, a ...interface{}) {
-	ld.Print(fmt.Sprintf(format, a))
+	ld.Print(fmt.Sprintf(format, a...))
 }
 
 func Printf(format string, a ...interface{}) {
-	AddError(nil).Printf(format, a)
+	AddError(nil).Printf(format, a...)
 }
 
 func (ld logData) Println(a ...interface{}) {
 	if level > ld.level {
 		return
 	}
-	humanString, jsonString := ld.format(fmt.Sprint(a))
+	humanString, jsonString := ld.format(fmt.Sprint(a...))
 	human.Println(humanString)
 	if folder == "" && false {
 		return
@@ -143,74 +143,74 @@ func (ld logData) Println(a ...interface{}) {
 }
 
 func Println(a ...interface{}) {
-	AddError(nil).Println(a)
+	AddError(nil).Println(a...)
 }
 
 func (ld logData) Debug(a ...interface{}) {
 	ld.level = DEBUG
-	ld.Print(a)
+	ld.Print(a...)
 }
 
 func Debug(a ...interface{}) {
-	AddError(nil).Debug(a)
+	AddError(nil).Debug(a...)
 }
 
 func (ld logData) Info(a ...interface{}) {
 	ld.level = INFO
-	ld.Print(a)
+	ld.Print(a...)
 }
 
 func Info(a ...interface{}) {
-	AddError(nil).Info(a)
+	AddError(nil).Info(a...)
 }
 
 func (ld logData) Notice(a ...interface{}) {
 	ld.level = NOTICE
-	ld.Print(a)
+	ld.Print(a...)
 }
 
 func Notice(a ...interface{}) {
-	AddError(nil).Notice(a)
+	AddError(nil).Notice(a...)
 }
 
 func (ld logData) Warning(a ...interface{}) {
 	ld.level = WARNING
-	ld.Print(a)
+	ld.Print(a...)
 }
 
 func Warning(a ...interface{}) {
-	AddError(nil).Warning(a)
+	AddError(nil).Warning(a...)
 }
 
 func (ld logData) Error(a ...interface{}) {
 	ld.level = ERROR
-	ld.Print(a)
+	ld.Print(a...)
 }
 
 func Error(a ...interface{}) {
-	AddError(nil).Error(a)
+	AddError(nil).Error(a...)
 }
 
 func (ld logData) Crit(a ...interface{}) {
 	ld.level = CRIT
-	ld.Print(a)
+	ld.Print(a...)
 	os.Exit(1)
 }
 
 func Crit(a ...interface{}) {
-	AddError(nil).Crit(a)
+	AddError(nil).Crit(a...)
 }
 
 func (ld logData) Fatal(a ...interface{}) {
-	ld.Crit(a)
+	ld.Crit(a...)
 }
 
 func Fatal(a ...interface{}) {
-	AddError(nil).Fatal(a)
+	AddError(nil).Fatal(a...)
 }
 
 func Fatalf(format string, a ...interface{}) {
-	Fatal(fmt.Sprintf(format, a)) // Tmp until i need more
+	Fatal(fmt.Sprintf(format, a...)) // Tmp until i need more
 }
 
 func fileExists(path string) bool {

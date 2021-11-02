@@ -20,6 +20,18 @@ SetPrefix sets the prefix name of the logs. When they rotate the one without any
 
 SetOutputFolder creates and sets the output folder for bouth human and json logs and returns a function to cloase the files if the process was successfull. 
 
+To use the rotating feature add a call to ` log.StartRotate(done chan func()) ` after the code example above. Full example below
+
+```go
+log.SetPrefix("vili")
+cloaser := log.SetOutputFolder(logDir)
+if cloaser == nil {
+	log.Fatal("Unable to sett logdir")
+}
+defer cloaser()
+log.StartRoute(nil)
+```
+
 ## Extra functions
 
 If you want to add an error to debug, info, notice, error, crit, fatal with the following pattern

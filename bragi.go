@@ -12,7 +12,9 @@ import (
 
 var (
 	human  = log.New(os.Stdout, "", 0)
+	humanf *os.File
 	json   = log.New(os.Stdout, "", 0)
+	jsonf  *os.File
 	folder string
 	prefix = "Default"
 	level  = Level(0)
@@ -37,6 +39,11 @@ func SetPrefix(p string) {
 	prefix = p
 }
 
+func Closer() {
+	humanf.Close()
+	jsonf.Close()
+}
+
 func SetOutputFolder(path string) func() {
 	folder = path
 	if !fileExists(path) {
@@ -45,29 +52,27 @@ func SetOutputFolder(path string) func() {
 			return nil
 		}
 	}
-	f, err := os.OpenFile(fmt.Sprintf("%s/%s.log", path, prefix), os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	var err error
+	humanf, err = os.OpenFile(fmt.Sprintf("%s/%s.log", path, prefix), os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		return nil
 	}
-	human = log.New(f, "", 0)
+	human.SetOutput(humanf)
 	jsonPath := path + "/json"
 	if !fileExists(jsonPath) {
 		err := os.MkdirAll(jsonPath, 0755)
 		if err != nil {
-			f.Close()
+			humanf.Close()
 			return nil
 		}
 	}
-	jsonf, err := os.OpenFile(fmt.Sprintf("%s/%s.log", jsonPath, prefix), os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	jsonf, err = os.OpenFile(fmt.Sprintf("%s/%s.log", jsonPath, prefix), os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
-		f.Close()
+		humanf.Close()
 		return nil
 	}
 	json.SetOutput(jsonf)
-	return func() {
-		f.Close()
-		jsonf.Close()
-	}
+	return Closer
 }
 
 type logData struct {

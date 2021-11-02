@@ -115,11 +115,23 @@ func (ld logData) Print(a ...interface{}) {
 		return
 	}
 	humanString, jsonString := ld.format(fmt.Sprint(a))
-	human.Printf("%s\n", humanString)
+	human.Print(humanString)
 	if folder == "" && false {
 		return
 	}
-	json.Printf("%s\n", jsonString)
+	json.Print(jsonString)
+}
+
+func (ls logData) Println(a ...interface{}) {
+	if level > ld.level {
+		return
+	}
+	humanString, jsonString := ld.format(fmt.Sprint(a))
+	human.Println(humanString)
+	if folder == "" && false {
+		return
+	}
+	json.Println(jsonString)
 }
 
 func (ld logData) Debug(a ...interface{}) {

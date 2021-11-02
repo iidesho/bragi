@@ -86,7 +86,7 @@ type Stringer interface {
 func (ld logData) format(s string) (human, json string) {
 	human = time.Now().Format("15:04:05 MST")
 	json = fmt.Sprintf(`{"time":"%s"`, time.Now().Format("15:04:05 MST"))
-	if ld.level == DEBUG {
+	if ld.level == DEBUG || ld.level == CRIT {
 		var (
 			function uintptr
 			file     string

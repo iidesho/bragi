@@ -122,6 +122,14 @@ func (ld logData) Print(a ...interface{}) {
 	json.Print(jsonString)
 }
 
+func (ld logData) Printf(format string, a ...interface{}) {
+	ld.Print(fmt.Sprintf(format, a))
+}
+
+func Printf(format string, a ...interface{}) {
+	AddError(nil).Printf(format, a)
+}
+
 func (ld logData) Println(a ...interface{}) {
 	if level > ld.level {
 		return

@@ -90,26 +90,29 @@ type Stringer interface {
 
 func (ld logData) format(s string) (human, json string) {
 	human = time.Now().Format("15:04:05 MST")
-	json = fmt.Sprintf(`{"time":"%s"`, time.Now().Format("15:04:05 MST"))
-	if ld.level == DEBUG || ld.level == CRIT {
-		var (
-			function uintptr
-			file     string
-			line     int
-		)
-		path := strings.Split(file, "/")
-		for i := 1; len(path) == 1 || path[len(path)-1] == "bragi.go"; i++ {
-			function, file, line, _ = runtime.Caller(i)
-			path = strings.Split(file, "/")
-		}
-		human = fmt.Sprintf("%s %s:%d/%s", human, path[len(path)-1], line, runtime.FuncForPC(function).Name())
-		json = fmt.Sprintf(`%s,"file":"%s","line":%d,"function":"%s"`, json, path[len(path)-1], line, runtime.FuncForPC(function).Name())
+	json = fmt.Sprintf(`{"@timestamp":"%s"`, time.Now().UTC().Format("2006-01-02T15:04:05.000Z"))
+	var (
+		function uintptr
+		file     string
+		line     int
+	)
+	path := strings.Split(file, "/")
+	for i := 1; len(path) == 1 || path[len(path)-1] == "bragi.go"; i++ {
+		function, file, line, _ = runtime.Caller(i)
+		path = strings.Split(file, "/")
 	}
+	if ld.level == DEBUG || ld.level == CRIT {
+		human = fmt.Sprintf("%s %s:%d/%s", human, path[len(path)-1], line, runtime.FuncForPC(function).Name())
+	}
+	json = fmt.Sprintf(`%s,"data":{"file":"%s","line":%d,"function":"%s"`, json, path[len(path)-1], line, runtime.FuncForPC(function).Name())
+	if ld.err != nil {
+		json = fmt.Sprintf(`%s,"error":"%v"`, json, ld.err)
+	}
+	json = fmt.Sprintf(`%s}`, json)
 	human = fmt.Sprintf("%s [%s]%s", human, ld.level, s)
-	json = fmt.Sprintf(`%s,"level":"%s","text":"%s"`, json, ld.level, s)
+	json = fmt.Sprintf(`%s,"level":"%s","message":"%s"`, json, ld.level, s)
 	if ld.err != nil {
 		human = fmt.Sprintf("%s. Err: %v", human, ld.err)
-		json = fmt.Sprintf(`%s,"error":"%v"`, json, ld.err)
 	}
 	json = fmt.Sprintf("%s}", json)
 	return

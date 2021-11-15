@@ -118,7 +118,7 @@ func (ld logData) format(s string) (human, json string) {
 	if ld.err != nil {
 		human = fmt.Sprintf("%s. Err: %v", human, ld.err)
 	}
-	json = string(json.Marshal(fmt.Sprintf("%s}", json)))
+	json = fmt.Sprintf("%s}", json)
 	return
 }
 

@@ -88,6 +88,10 @@ type Stringer interface {
 	String() string
 }
 
+var jsonEscaper = strings.NewReplacer(
+	`"`, `\"`,
+)
+
 func (ld logData) format(s string) (human, json string) {
 	human = time.Now().Format("15:04:05 MST")
 	json = fmt.Sprintf(`{"@timestamp":"%s"`, time.Now().UTC().Format("2006-01-02T15:04:05.000Z"))
@@ -106,15 +110,15 @@ func (ld logData) format(s string) (human, json string) {
 	}
 	json = fmt.Sprintf(`%s,"data":{"file":"%s","line":%d,"function":"%s"`, json, path[len(path)-1], line, runtime.FuncForPC(function).Name())
 	if ld.err != nil {
-		json = fmt.Sprintf(`%s,"error":"%v"`, json, ld.err)
+		json = fmt.Sprintf(`%s,"error":"%s"`, json, jsonEscaper.Replace(ld.err.Error()))
 	}
 	json = fmt.Sprintf(`%s}`, json)
 	human = fmt.Sprintf("%s [%s]%s", human, ld.level, s)
-	json = fmt.Sprintf(`%s,"level":"%s","message":"%s"`, json, ld.level, s)
+	json = fmt.Sprintf(`%s,"level":"%s","message":"%s"`, json, ld.level, jsonEscaper.Replace(s))
 	if ld.err != nil {
 		human = fmt.Sprintf("%s. Err: %v", human, ld.err)
 	}
-	json = fmt.Sprintf("%s}", json)
+	json = string(json.Marshal(fmt.Sprintf("%s}", json)))
 	return
 }
 

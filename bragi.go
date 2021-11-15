@@ -32,7 +32,7 @@ const (
 )
 
 func (l Level) String() string {
-	return []string{"Debug", "Info", "Notice", "Warning", "Error", "Crit"}[l]
+	return []string{"DEBUG", "INFO", "NOTICE", "WARNING", "ERROR", "CRIT"}[l]
 }
 
 func SetPrefix(p string) {

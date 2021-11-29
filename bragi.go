@@ -128,7 +128,7 @@ func (ld logData) Print(a ...interface{}) {
 	}
 	humanString, jsonString := ld.format(fmt.Sprint(a...))
 	human.Print(humanString)
-	if folder == "" && false {
+	if folder == "" {
 		return
 	}
 	json.Print(jsonString)

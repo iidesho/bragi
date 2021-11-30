@@ -214,7 +214,7 @@ func Crit(a ...interface{}) {
 
 func (ld logData) Fatal(a ...interface{}) {
 	ld.Crit(a...)
-	panic(Exit{1})
+	panic()
 }
 
 func Fatal(a ...interface{}) {

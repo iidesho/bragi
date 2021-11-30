@@ -206,7 +206,6 @@ func Error(a ...interface{}) {
 func (ld logData) Crit(a ...interface{}) {
 	ld.level = CRIT
 	ld.Print(a...)
-	os.Exit(1)
 }
 
 func Crit(a ...interface{}) {
@@ -215,6 +214,7 @@ func Crit(a ...interface{}) {
 
 func (ld logData) Fatal(a ...interface{}) {
 	ld.Crit(a...)
+	os.Exit(1)
 }
 
 func Fatal(a ...interface{}) {

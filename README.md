@@ -1,6 +1,15 @@
 # Bragi
 
+[![GoDoc](https://godoc.org/github.com/appleboy/gorush?status.svg)](https://godoc.org/github.com/cantara/bragi) [![Go Report Card](https://goreportcard.com/badge/github.com/cantara/bragi)](https://goreportcard.com/report/github.com/cantara/bragi)
+
 Bragi is a simple log lib that is designed to be a dropin repleasement for go's std log lib. But with log output that reflect the output given with java logback. This lib is also going to rotate log files and remove old logs.
+
+## Contents
+
+- [Bragi](#Bragi)
+  - [Contents](#contents)
+  - [How to use](#how-to-use)
+  - [Extra functions](#extra-functions)
 
 ## How to use
 

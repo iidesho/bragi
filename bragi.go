@@ -17,7 +17,7 @@ var (
 	jsonf  *os.File
 	folder string
 	prefix = "Default"
-	level  = Level(0)
+	level  = DEBUG
 )
 
 type Level int

@@ -6,6 +6,6 @@ import (
 )
 
 func TestDebug(t *testing.T) {
-	Error(fmt.Errorf("Some error message")).Debug("Debug info")
+	AddError(fmt.Errorf("Some error message")).Debug("Debug info")
 	// t.Fatal("not implemented")
 }

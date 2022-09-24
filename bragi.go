@@ -75,6 +75,10 @@ func SetOutputFolder(path string) func() {
 	return Closer
 }
 
+func SetLevel(l Level) {
+	level = l
+}
+
 type logData struct {
 	err   error
 	level Level

@@ -1,6 +1,7 @@
 package bragi
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -18,6 +19,8 @@ var (
 	folder string
 	prefix = "Default"
 	level  = DEBUG
+	ctx    context.Context
+	cancel func()
 )
 
 type Level int
@@ -42,9 +45,11 @@ func SetPrefix(p string) {
 func Closer() {
 	humanf.Close()
 	jsonf.Close()
+	cancel()
 }
 
 func SetOutputFolder(path string) func() {
+	ctx, cancel = context.WithCancel(context.Background())
 	folder = path
 	if !fileExists(path) {
 		err := os.MkdirAll(path, 0755)
@@ -52,26 +57,46 @@ func SetOutputFolder(path string) func() {
 			return nil
 		}
 	}
-	var err error
-	humanf, err = os.OpenFile(fmt.Sprintf("%s/%s.log", path, prefix), os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
-	if err != nil {
-		return nil
-	}
-	human.SetOutput(humanf)
 	jsonPath := path + "/json"
 	if !fileExists(jsonPath) {
 		err := os.MkdirAll(jsonPath, 0755)
 		if err != nil {
-			humanf.Close()
 			return nil
 		}
 	}
-	jsonf, err = os.OpenFile(fmt.Sprintf("%s/%s.log", jsonPath, prefix), os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	var err error
+	humanf, jsonf, err = newLogFiles(path, jsonPath)
 	if err != nil {
-		humanf.Close()
+		AddError(err).Error("unable to create new logfiles")
 		return nil
 	}
+	human.SetOutput(humanf)
 	json.SetOutput(jsonf)
+	go func() {
+		nextDay := time.Now().UTC().AddDate(0, 0, 1)
+		nextDay = time.Date(nextDay.Year(), nextDay.Month(), nextDay.Day(), 0, 0, 0, 1, time.UTC)
+		rotateTicker := time.Tick(time.Second)
+		rotateDayTicker := time.NewTicker(nextDay.Sub(nextDay))
+		truncateTaleTicker := time.Tick(time.Second * 5)
+		firstDay := true
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-rotateTicker:
+				rotate(path, jsonPath)
+			case <-rotateDayTicker.C:
+				if firstDay {
+					firstDay = false
+					rotateDayTicker.Reset(24 * time.Hour)
+				}
+				rotate(path, jsonPath)
+			case <-truncateTaleTicker:
+				truncateTale(path)
+				truncateTale(jsonPath)
+			}
+		}
+	}()
 	return Closer
 }
 
@@ -233,3 +258,93 @@ func fileExists(path string) bool {
 	_, err := os.Stat(path)
 	return !errors.Is(err, os.ErrNotExist)
 }
+
+func newLogFiles(path, jsonPath string) (hf *os.File, jf *os.File, err error) {
+	hf, err = os.OpenFile(fmt.Sprintf("%s/%s.log", path, prefix), os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		return
+	}
+	jf, err = os.OpenFile(fmt.Sprintf("%s/%s.log", jsonPath, prefix), os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		hf.Close()
+		return
+	}
+	return
+}
+
+func rotate(path, jsonPath string) {
+	jsonStat, err := jsonf.Stat()
+	if err != nil {
+		AddError(err).Error("unable to get json log file stats for rotation")
+	}
+	if jsonStat.Size() < 24*MB {
+		return
+	}
+	tf := time.Now().Format("2006-01-02T15:04:05")
+	oldName := humanf.Name()
+	err = os.Rename(oldName, strings.Replace(oldName, ".log", fmt.Sprintf("-%s.log", tf), 1))
+	if err != nil {
+		AddError(err).Error("unable to move old human log file")
+		return
+	}
+	oldName = jsonf.Name()
+	err = os.Rename(oldName, strings.Replace(oldName, ".log", fmt.Sprintf("-%s.log", tf), 1))
+	if err != nil {
+		AddError(err).Error("unable to move old json log file")
+		return
+	}
+	newHumanf, newJsonf, err := newLogFiles(path, jsonPath)
+	if err != nil {
+		AddError(err).Error("unable to create new logfiles")
+		return
+	}
+	oldHumanf := humanf
+	oldJsonf := jsonf
+	humanf = newHumanf
+	jsonf = newJsonf
+	human.SetOutput(humanf)
+	json.SetOutput(jsonf)
+	oldHumanf.Close()
+	oldJsonf.Close()
+}
+
+func truncateTale(path string) {
+	files, err := os.ReadDir(path)
+	if err != nil {
+		AddError(err).Error("could not read dir for logs")
+		return
+	}
+	numFiles := 0
+	var oldestFile os.FileInfo
+	for _, file := range files {
+		if file.IsDir() {
+			continue
+		}
+		numFiles++
+		fi, err := file.Info()
+		if err != nil {
+			AddError(err).Error("cannot convert direntry to fileinfo in ls of log dir")
+			continue
+		}
+		if oldestFile == nil || fi.ModTime().Before(oldestFile.ModTime()) {
+			oldestFile = fi
+		}
+	}
+	if numFiles >= 10 {
+		err = os.Remove(fmt.Sprintf("%s/%s", path, oldestFile.Name()))
+		if err != nil {
+			AddError(err).Error("unable to remove old log file")
+			return
+		}
+	}
+}
+
+const (
+	B int64 = 1 << (10 * iota)
+	KB
+	MB
+	GB
+	TB
+	PB
+	EB
+)

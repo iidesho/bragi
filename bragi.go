@@ -76,7 +76,7 @@ func SetOutputFolder(path string) func() {
 		nextDay := time.Now().UTC().AddDate(0, 0, 1)
 		nextDay = time.Date(nextDay.Year(), nextDay.Month(), nextDay.Day(), 0, 0, 0, 1, time.UTC)
 		rotateTicker := time.Tick(time.Second)
-		rotateDayTicker := time.NewTicker(nextDay.Sub(nextDay))
+		rotateDayTicker := time.NewTicker(nextDay.Sub(time.Now()))
 		truncateTaleTicker := time.Tick(time.Second * 5)
 		firstDay := true
 		for {

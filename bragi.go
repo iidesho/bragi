@@ -75,23 +75,38 @@ func SetOutputFolder(path string) func() {
 	go func() {
 		nextDay := time.Now().UTC().AddDate(0, 0, 1)
 		nextDay = time.Date(nextDay.Year(), nextDay.Month(), nextDay.Day(), 0, 0, 0, 1, time.UTC)
+		nextDayIn := nextDay.Sub(time.Now().UTC())
 		rotateTicker := time.Tick(time.Second)
-		rotateDayTicker := time.NewTicker(nextDay.Sub(time.Now()))
+		rotateDayTicker := time.NewTicker(nextDayIn)
 		truncateTaleTicker := time.Tick(time.Second * 5)
 		firstDay := true
+		Debug("all tickers for logger is created, next day is in: ", nextDayIn)
 		for {
 			select {
 			case <-ctx.Done():
+				Debug("logger done ticker selected")
 				return
 			case <-rotateTicker:
+				Debug("logger rotate ticker selected")
+				jsonStat, err := jsonf.Stat()
+				if err != nil {
+					AddError(err).Error("unable to get json log file stats for rotation")
+					continue
+				}
+				if jsonStat.Size() < 24*MB {
+					Debug("skipping rotate as filesize is less than 24KB base2. size is: ", jsonStat.Size(), " < ", 24*MB)
+					continue
+				}
 				rotate(path, jsonPath)
 			case <-rotateDayTicker.C:
+				Debug("logger daily rotate ticker selected")
 				if firstDay {
 					firstDay = false
 					rotateDayTicker.Reset(24 * time.Hour)
 				}
 				rotate(path, jsonPath)
 			case <-truncateTaleTicker:
+				Debug("logger truncate ticker selected")
 				truncateTale(path)
 				truncateTale(jsonPath)
 			}
@@ -273,16 +288,9 @@ func newLogFiles(path, jsonPath string) (hf *os.File, jf *os.File, err error) {
 }
 
 func rotate(path, jsonPath string) {
-	jsonStat, err := jsonf.Stat()
-	if err != nil {
-		AddError(err).Error("unable to get json log file stats for rotation")
-	}
-	if jsonStat.Size() < 24*MB {
-		return
-	}
-	tf := time.Now().Format("2006-01-02T15:04:05")
+	tf := time.Now().UTC().Format("2006-01-02T15:04:05")
 	oldName := humanf.Name()
-	err = os.Rename(oldName, strings.Replace(oldName, ".log", fmt.Sprintf("-%s.log", tf), 1))
+	err := os.Rename(oldName, strings.Replace(oldName, ".log", fmt.Sprintf("-%s.log", tf), 1))
 	if err != nil {
 		AddError(err).Error("unable to move old human log file")
 		return
@@ -330,12 +338,14 @@ func truncateTale(path string) {
 			oldestFile = fi
 		}
 	}
-	if numFiles >= 10 {
-		err = os.Remove(fmt.Sprintf("%s/%s", path, oldestFile.Name()))
-		if err != nil {
-			AddError(err).Error("unable to remove old log file")
-			return
-		}
+	if numFiles < 12 {
+		return
+	}
+	Debug("logger truncating logfiles at path: ", path)
+	err = os.Remove(fmt.Sprintf("%s/%s", path, oldestFile.Name()))
+	if err != nil {
+		AddError(err).Error("unable to remove old log file")
+		return
 	}
 }
 

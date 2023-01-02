@@ -87,26 +87,26 @@ func SetOutputFolder(path string) func() {
 				Debug("logger done ticker selected")
 				return
 			case <-rotateTicker:
-				Debug("logger rotate ticker selected")
+				//Debug("logger rotate ticker selected")
 				jsonStat, err := jsonf.Stat()
 				if err != nil {
 					AddError(err).Error("unable to get json log file stats for rotation")
 					continue
 				}
 				if jsonStat.Size() < 24*MB {
-					Debug("skipping rotate as filesize is less than 24KB base2. size is: ", jsonStat.Size(), " < ", 24*MB)
+					//Debug("skipping rotate as filesize is less than 24KB base2. size is: ", jsonStat.Size(), " < ", 24*MB)
 					continue
 				}
 				rotate(path, jsonPath)
 			case <-rotateDayTicker.C:
-				Debug("logger daily rotate ticker selected")
+				//Debug("logger daily rotate ticker selected")
 				if firstDay {
 					firstDay = false
 					rotateDayTicker.Reset(24 * time.Hour)
 				}
 				rotate(path, jsonPath)
 			case <-truncateTaleTicker:
-				Debug("logger truncate ticker selected")
+				//Debug("logger truncate ticker selected")
 				truncateTale(path)
 				truncateTale(jsonPath)
 			}
@@ -341,7 +341,7 @@ func truncateTale(path string) {
 	if numFiles < 12 {
 		return
 	}
-	Debug("logger truncating logfiles at path: ", path)
+	//Debug("logger truncating logfiles at path: ", path)
 	err = os.Remove(fmt.Sprintf("%s/%s", path, oldestFile.Name()))
 	if err != nil {
 		AddError(err).Error("unable to remove old log file")

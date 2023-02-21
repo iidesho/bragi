@@ -108,7 +108,7 @@ func NewHandlerInFolder(path string) (h handler, err error) {
 		rotateDayTicker := time.NewTicker(nextDayIn)
 		truncateTaleTicker := time.Tick(time.Second * 5)
 		firstDay := true
-		slog.Info(fmt.Sprintf("all tickers for logger is created, next day is in: %d", nextDayIn), "next_day_in", nextDayIn)
+		slog.Info(fmt.Sprintf("all tickers for logger is created, next day is in: %v", nextDayIn), "next_day_in", nextDayIn)
 		for {
 			select {
 			case <-ctx.Done():

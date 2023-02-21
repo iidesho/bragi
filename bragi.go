@@ -18,7 +18,7 @@ var (
 	jsonf  *os.File
 	folder string
 	prefix = "Default"
-	level  = DEBUG
+	level  = INFO
 	ctx    context.Context
 	cancel func()
 )
@@ -51,27 +51,27 @@ func Closer() {
 func SetOutputFolder(path string) func() {
 	ctx, cancel = context.WithCancel(context.Background())
 	folder = path
-	if !fileExists(path) {
+	if !FileExists(path) {
 		err := os.MkdirAll(path, 0755)
 		if err != nil {
 			return nil
 		}
 	}
 	jsonPath := path + "/json"
-	if !fileExists(jsonPath) {
+	if !FileExists(jsonPath) {
 		err := os.MkdirAll(jsonPath, 0755)
 		if err != nil {
 			return nil
 		}
 	}
 	var err error
-	humanf, jsonf, err = newLogFiles(path, jsonPath)
+	humanf, jsonf, err = NewLogFiles(path, jsonPath)
 	if err != nil {
 		AddError(err).Error("unable to create new logfiles")
 		return nil
 	}
-	human.SetOutput(humanf)
-	json.SetOutput(jsonf)
+	human = log.New(humanf, prefix, 0)
+	json = log.New(humanf, prefix, 0)
 	go func() {
 		nextDay := time.Now().UTC().AddDate(0, 0, 1)
 		nextDay = time.Date(nextDay.Year(), nextDay.Month(), nextDay.Day(), 0, 0, 0, 1, time.UTC)
@@ -97,18 +97,18 @@ func SetOutputFolder(path string) func() {
 					//Debug("skipping rotate as filesize is less than 24KB base2. size is: ", jsonStat.Size(), " < ", 24*MB)
 					continue
 				}
-				rotate(path, jsonPath)
+				Rotate(path, jsonPath)
 			case <-rotateDayTicker.C:
 				//Debug("logger daily rotate ticker selected")
 				if firstDay {
 					firstDay = false
 					rotateDayTicker.Reset(24 * time.Hour)
 				}
-				rotate(path, jsonPath)
+				Rotate(path, jsonPath)
 			case <-truncateTaleTicker:
 				//Debug("logger truncate ticker selected")
-				truncateTale(path)
-				truncateTale(jsonPath)
+				TruncateTale(path)
+				TruncateTale(jsonPath)
 			}
 		}
 	}()
@@ -269,12 +269,12 @@ func Fatalf(format string, a ...interface{}) {
 	Fatal(fmt.Sprintf(format, a...)) // Tmp until i need more
 }
 
-func fileExists(path string) bool {
+func FileExists(path string) bool {
 	_, err := os.Stat(path)
 	return !errors.Is(err, os.ErrNotExist)
 }
 
-func newLogFiles(path, jsonPath string) (hf *os.File, jf *os.File, err error) {
+func NewLogFiles(path, jsonPath string) (hf *os.File, jf *os.File, err error) {
 	hf, err = os.OpenFile(fmt.Sprintf("%s/%s.log", path, prefix), os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		return
@@ -287,7 +287,7 @@ func newLogFiles(path, jsonPath string) (hf *os.File, jf *os.File, err error) {
 	return
 }
 
-func rotate(path, jsonPath string) {
+func Rotate(path, jsonPath string) {
 	tf := time.Now().UTC().Format("2006-01-02T15:04:05")
 	oldName := humanf.Name()
 	err := os.Rename(oldName, strings.Replace(oldName, ".log", fmt.Sprintf("-%s.log", tf), 1))
@@ -301,7 +301,7 @@ func rotate(path, jsonPath string) {
 		AddError(err).Error("unable to move old json log file")
 		return
 	}
-	newHumanf, newJsonf, err := newLogFiles(path, jsonPath)
+	newHumanf, newJsonf, err := NewLogFiles(path, jsonPath)
 	if err != nil {
 		AddError(err).Error("unable to create new logfiles")
 		return
@@ -316,7 +316,7 @@ func rotate(path, jsonPath string) {
 	oldJsonf.Close()
 }
 
-func truncateTale(path string) {
+func TruncateTale(path string) {
 	files, err := os.ReadDir(path)
 	if err != nil {
 		AddError(err).Error("could not read dir for logs")

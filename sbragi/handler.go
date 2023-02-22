@@ -187,3 +187,7 @@ func (h *handler) Cancel() {
 	h.fileJson.Close()
 	h.cancel()
 }
+
+func (h *handler) MakeDefault() {
+	slog.SetDefault(slog.New(h))
+}

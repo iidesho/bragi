@@ -18,10 +18,6 @@ type Logger interface {
 	WithError(err error) Logger
 }
 
-func SetDefault(l Logger) {
-	defaultLogger = l
-}
-
 type logger struct {
 	handler slog.Handler
 	log     *slog.Logger
@@ -52,7 +48,7 @@ func (l logger) Trace(msg string, args ...any) {
 }
 
 func (l logger) Debug(msg string, args ...any) {
-	if !l.handler.Enabled(nil, LevelTrace) {
+	if !l.handler.Enabled(nil, LevelDebug) {
 		return
 	}
 	if l.err != nil {
@@ -62,7 +58,7 @@ func (l logger) Debug(msg string, args ...any) {
 }
 
 func (l logger) Info(msg string, args ...any) {
-	if !l.handler.Enabled(nil, LevelTrace) {
+	if !l.handler.Enabled(nil, LevelInfo) {
 		return
 	}
 	if l.err != nil {
@@ -72,7 +68,7 @@ func (l logger) Info(msg string, args ...any) {
 }
 
 func (l logger) Notice(msg string, args ...any) {
-	if !l.handler.Enabled(nil, LevelTrace) {
+	if !l.handler.Enabled(nil, LevelNotice) {
 		return
 	}
 	if l.err != nil {
@@ -82,7 +78,7 @@ func (l logger) Notice(msg string, args ...any) {
 }
 
 func (l logger) Warning(msg string, args ...any) {
-	if !l.handler.Enabled(nil, LevelTrace) {
+	if !l.handler.Enabled(nil, LevelWarning) {
 		return
 	}
 	if l.err != nil {
@@ -92,7 +88,7 @@ func (l logger) Warning(msg string, args ...any) {
 }
 
 func (l logger) Error(msg string, args ...any) {
-	if !l.handler.Enabled(nil, LevelTrace) {
+	if !l.handler.Enabled(nil, LevelError) {
 		return
 	}
 	if l.err != nil {
@@ -102,13 +98,14 @@ func (l logger) Error(msg string, args ...any) {
 }
 
 func (l logger) Fatal(msg string, args ...any) {
-	if !l.handler.Enabled(nil, LevelTrace) {
+	if !l.handler.Enabled(nil, LevelFatal) {
 		return
 	}
 	if l.err != nil {
 		args = append([]any{"error", l.err}, args...)
 	}
 	l.log.LogDepth(l.depth, LevelFatal, msg, args...)
+	panic(msg)
 }
 
 func (l logger) WithError(err error) Logger {

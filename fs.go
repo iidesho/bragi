@@ -29,8 +29,8 @@ func StartRotate(done <-chan func()) {
 				if jerr != nil {
 					AddError(jerr).Warning("Could not get json file stats while checking if it should be rotated")
 				}
-				if !(herr == nil && hstat.Size() > 11<<20 || jerr == nil && jstat.Size() > 11<<20) { // Bitshifting to megabyte so i dont have to write the whole number
-					continue // Continuing if bouth files are smaller than 11MB
+				if !(herr == nil && hstat.Size() > MB*11 || jerr == nil && jstat.Size() > MB*11) {
+					continue // Continuing if both files are smaller than 11MB
 				}
 				rotateLog()
 			}

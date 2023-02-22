@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-var defaultLogger, _ = newLogger(2, slog.NewTextHandler(os.Stdout))
+var defaultLogger, _ = NewLogger(slog.NewTextHandler(os.Stdout))
 
 type Logger interface {
 	Trace(msg string, args ...any)

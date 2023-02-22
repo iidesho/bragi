@@ -16,6 +16,7 @@ type Logger interface {
 	Error(msg string, args ...any)
 	Fatal(msg string, args ...any)
 	WithError(err error) Logger
+	SetDefault()
 }
 
 type logger struct {
@@ -35,6 +36,10 @@ func newLogger(depth int, handler slog.Handler) (Logger, error) {
 		log:     slog.New(handler),
 		depth:   depth,
 	}, nil
+}
+
+func (l logger) SetDefault() {
+	defaultLogger = l
 }
 
 func (l logger) Trace(msg string, args ...any) {

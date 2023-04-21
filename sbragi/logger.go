@@ -30,6 +30,13 @@ func NewLogger(handler slog.Handler) (Logger, error) {
 	return newLogger(1, handler)
 }
 
+func NewDebugLogger() (Logger, error) {
+	return NewLogger(slog.HandlerOptions{
+		AddSource: true,
+		Level:     LevelTrace,
+	}.NewTextHandler(os.Stdout))
+}
+
 func newLogger(depth int, handler slog.Handler) (Logger, error) {
 	return logger{
 		handler: handler,

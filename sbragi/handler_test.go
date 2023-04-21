@@ -13,7 +13,7 @@ func TestLongRunning(t *testing.T) {
 		return
 	}
 	defer h.Cancel()
-	h.level = slog.LevelDebug
+	h.SetLevel(slog.LevelDebug)
 	log := slog.New(&h)
 	i := 0
 	ticker := time.Tick(time.Nanosecond)

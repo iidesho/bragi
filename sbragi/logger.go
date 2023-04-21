@@ -27,7 +27,7 @@ type logger struct {
 }
 
 func NewLogger(handler slog.Handler) (Logger, error) {
-	return newLogger(2, handler)
+	return newLogger(1, handler)
 }
 
 func newLogger(depth int, handler slog.Handler) (Logger, error) {

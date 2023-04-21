@@ -13,9 +13,9 @@ func TestLogger(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	h.level = LevelTrace
+	h.SetLevel(LevelTrace)
 	defer h.Cancel()
-	log, err := newLogger(1, &h)
+	log, err := NewLogger(&h)
 	if err != nil {
 		t.Error(err)
 		return

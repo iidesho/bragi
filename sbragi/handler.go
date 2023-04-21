@@ -191,3 +191,7 @@ func (h *handler) Cancel() {
 func (h *handler) MakeDefault() {
 	slog.SetDefault(slog.New(h))
 }
+
+func (h *handler) SetLevel(level slog.Level) {
+	h.level = level
+}

@@ -26,18 +26,18 @@ type logger struct {
 	err     error
 }
 
-func NewLogger(handler slog.Handler) (Logger, error) {
+func NewLogger(handler slog.Handler) (logger, error) {
 	return newLogger(1, handler)
 }
 
-func NewDebugLogger() (Logger, error) {
+func NewDebugLogger() (logger, error) {
 	return NewLogger(slog.HandlerOptions{
 		AddSource: true,
 		Level:     LevelTrace,
 	}.NewTextHandler(os.Stdout))
 }
 
-func newLogger(depth int, handler slog.Handler) (Logger, error) {
+func newLogger(depth int, handler slog.Handler) (logger, error) {
 	return logger{
 		handler: handler,
 		log:     slog.New(handler),
@@ -46,6 +46,7 @@ func newLogger(depth int, handler slog.Handler) (Logger, error) {
 }
 
 func (l logger) SetDefault() {
+	l.depth++
 	defaultLogger = l
 }
 
@@ -122,6 +123,7 @@ func (l logger) Fatal(msg string, args ...any) {
 
 func (l logger) WithError(err error) Logger {
 	l.err = err
+	//l.depth--
 	return l
 }
 
@@ -147,5 +149,7 @@ func Fatal(msg string, args ...any) {
 	defaultLogger.Fatal(msg, args...)
 }
 func WithError(err error) Logger {
-	return defaultLogger.WithError(err)
+	l := defaultLogger
+	l.depth--
+	return l.WithError(err)
 }

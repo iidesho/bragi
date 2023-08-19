@@ -1,11 +1,14 @@
 package sbragi
 
 import (
-	"golang.org/x/exp/slog"
+	"context"
+	"log/slog"
 	"os"
+	"runtime"
+	"time"
 )
 
-var defaultLogger, _ = NewLogger(slog.NewTextHandler(os.Stdout))
+var defaultLogger, _ = NewLogger(slog.NewTextHandler(os.Stdout, nil))
 
 type Logger interface {
 	Trace(msg string, args ...any)
@@ -21,32 +24,32 @@ type Logger interface {
 
 type logger struct {
 	handler slog.Handler
-	log     *slog.Logger
+	slog    *slog.Logger
 	depth   int
+	ctx     context.Context
 	err     error
 }
 
 func NewLogger(handler slog.Handler) (logger, error) {
-	return newLogger(1, handler)
+	return newLogger(handler)
 }
 
 func NewDebugLogger() (logger, error) {
-	return NewLogger(slog.HandlerOptions{
+	return NewLogger(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		AddSource: true,
 		Level:     LevelTrace,
-	}.NewTextHandler(os.Stdout))
+	}))
 }
 
-func newLogger(depth int, handler slog.Handler) (logger, error) {
+func newLogger(handler slog.Handler) (logger, error) {
 	return logger{
 		handler: handler,
-		log:     slog.New(handler),
-		depth:   depth,
+		slog:    slog.New(handler),
+		ctx:     context.Background(),
 	}, nil
 }
 
 func (l logger) SetDefault() {
-	l.depth++
 	defaultLogger = l
 }
 
@@ -57,7 +60,7 @@ func (l logger) Trace(msg string, args ...any) {
 	if l.err != nil {
 		args = append([]any{"error", l.err}, args...)
 	}
-	l.log.LogDepth(l.depth, LevelTrace, msg, args...)
+	l.log(LevelTrace, msg, args...)
 }
 
 func (l logger) Debug(msg string, args ...any) {
@@ -67,7 +70,7 @@ func (l logger) Debug(msg string, args ...any) {
 	if l.err != nil {
 		args = append([]any{"error", l.err}, args...)
 	}
-	l.log.LogDepth(l.depth, LevelDebug, msg, args...)
+	l.log(LevelDebug, msg, args...)
 }
 
 func (l logger) Info(msg string, args ...any) {
@@ -77,7 +80,7 @@ func (l logger) Info(msg string, args ...any) {
 	if l.err != nil {
 		args = append([]any{"error", l.err}, args...)
 	}
-	l.log.LogDepth(l.depth, LevelInfo, msg, args...)
+	l.log(LevelInfo, msg, args...)
 }
 
 func (l logger) Notice(msg string, args ...any) {
@@ -87,7 +90,7 @@ func (l logger) Notice(msg string, args ...any) {
 	if l.err != nil {
 		args = append([]any{"error", l.err}, args...)
 	}
-	l.log.LogDepth(l.depth, LevelNotice, msg, args...)
+	l.log(LevelNotice, msg, args...)
 }
 
 func (l logger) Warning(msg string, args ...any) {
@@ -97,7 +100,7 @@ func (l logger) Warning(msg string, args ...any) {
 	if l.err != nil {
 		args = append([]any{"error", l.err}, args...)
 	}
-	l.log.LogDepth(l.depth, LevelWarning, msg, args...)
+	l.log(LevelWarning, msg, args...)
 }
 
 func (l logger) Error(msg string, args ...any) {
@@ -107,7 +110,7 @@ func (l logger) Error(msg string, args ...any) {
 	if l.err != nil {
 		args = append([]any{"error", l.err}, args...)
 	}
-	l.log.LogDepth(l.depth, LevelError, msg, args...)
+	l.log(LevelError, msg, args...)
 }
 
 func (l logger) Fatal(msg string, args ...any) {
@@ -117,7 +120,7 @@ func (l logger) Fatal(msg string, args ...any) {
 	if l.err != nil {
 		args = append([]any{"error", l.err}, args...)
 	}
-	l.log.LogDepth(l.depth, LevelFatal, msg, args...)
+	l.log(LevelFatal, msg, args...)
 	panic(msg)
 }
 
@@ -152,4 +155,21 @@ func WithError(err error) Logger {
 	l := defaultLogger
 	l.depth--
 	return l.WithError(err)
+}
+
+// log is the low-level logging method for methods that take ...any.
+// It must always be called directly by an exported logging method
+// or function, because it uses a fixed call depth to obtain the pc.
+func (l logger) log(level slog.Level, msg string, args ...any) {
+	if !l.handler.Enabled(l.ctx, level) {
+		return
+	}
+	var pc uintptr
+	var pcs [1]uintptr
+	// skip [runtime.Callers, this function, this function's caller]
+	runtime.Callers(3+l.depth, pcs[:])
+	pc = pcs[0]
+	r := slog.NewRecord(time.Now(), level, msg, pc)
+	r.Add(args...)
+	_ = l.handler.Handle(l.ctx, r)
 }

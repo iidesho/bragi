@@ -1,7 +1,7 @@
 package sbragi
 
 import (
-	"golang.org/x/exp/slog"
+	"log/slog"
 	"testing"
 	"time"
 )
@@ -19,7 +19,7 @@ func TestLongRunning(t *testing.T) {
 	ticker := time.Tick(time.Nanosecond)
 	for range ticker {
 		if i%2 == 0 {
-			log.Log(slog.LevelInfo, "text", "error", i)
+			log.Log(nil, slog.LevelInfo, "text", "error", i)
 		} else {
 			log.Debug("text", "error", i)
 		}

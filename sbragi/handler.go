@@ -3,11 +3,13 @@ package sbragi
 import (
 	"context"
 	"fmt"
-	"github.com/cantara/bragi"
-	"golang.org/x/exp/slog"
+	"log/slog"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/cantara/bragi"
+	"github.com/cantara/bragi/sbragi/mergedcontext"
 )
 
 const (
@@ -97,9 +99,9 @@ func NewHandlerInFolder(path string) (h handler, err error) {
 			return a
 		},
 	}
-	h.human = handlerOpt.NewTextHandler(h.fileHuman)
+	h.human = slog.NewTextHandler(h.fileHuman, &handlerOpt)
 	handlerOpt.AddSource = true
-	h.json = handlerOpt.NewJSONHandler(h.fileJson)
+	h.json = slog.NewJSONHandler(h.fileJson, &handlerOpt)
 	go func() {
 		nextDay := time.Now().UTC().AddDate(0, 0, 1)
 		nextDay = time.Date(nextDay.Year(), nextDay.Month(), nextDay.Day(), 0, 0, 0, 1, time.UTC)
@@ -119,7 +121,7 @@ func NewHandlerInFolder(path string) (h handler, err error) {
 				//Debug("logger rotate ticker selected")
 				jsonStat, err := h.fileJson.Stat()
 				if err != nil {
-					slog.Log(LevelFatal, "unable to get json log file stats for rotation", "error", err.Error())
+					slog.Log(ctx, LevelFatal, "unable to get json log file stats for rotation", "error", err.Error())
 					continue
 				}
 				if jsonStat.Size() < 24*bragi.MB {
@@ -151,12 +153,13 @@ func (h *handler) Enabled(_ context.Context, level slog.Level) bool {
 	return true
 }
 
-func (h *handler) Handle(r slog.Record) (err error) {
-	err = h.human.Handle(r)
+func (h *handler) Handle(ctx context.Context, r slog.Record) (err error) {
+	ctx, _ = mergedcontext.MergeContexts(h.ctx, ctx)
+	err = h.human.Handle(ctx, r)
 	if err != nil {
 		return
 	}
-	return h.json.Handle(r)
+	return h.json.Handle(ctx, r)
 }
 
 func (h *handler) WithAttrs(attrs []slog.Attr) slog.Handler {

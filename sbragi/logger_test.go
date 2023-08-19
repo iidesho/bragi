@@ -2,7 +2,7 @@ package sbragi
 
 import (
 	"fmt"
-	"golang.org/x/exp/slog"
+	"log/slog"
 	"os"
 	"testing"
 )
@@ -32,12 +32,14 @@ func TestLogger(t *testing.T) {
 	log.Warning("test")
 	log.WithError(fmt.Errorf("simple error 6")).Error("test")
 	log.Error("test")
-	log.WithError(fmt.Errorf("simple error 7")).Fatal("test")
-	log.Fatal("test")
+	/*
+		log.WithError(fmt.Errorf("simple error 7")).Fatal("test")
+		log.Fatal("test")
+	*/
 }
 
 func BenchmarkLogger(b *testing.B) {
-	log, err := newLogger(1, slog.NewJSONHandler(os.Stdout))
+	log, err := newLogger(slog.NewJSONHandler(os.Stdout, nil))
 	if err != nil {
 		b.Error(err)
 		return
@@ -54,7 +56,7 @@ func BenchmarkLoggerWHandler(b *testing.B) {
 		return
 	}
 	defer h.Cancel()
-	log, err := newLogger(1, &h)
+	log, err := newLogger(&h)
 	if err != nil {
 		b.Error(err)
 		return

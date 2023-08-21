@@ -19,15 +19,17 @@ type Logger interface {
 	Error(msg string, args ...any)
 	Fatal(msg string, args ...any)
 	WithError(err error) Logger
+	WithoutEscalation() Logger
 	SetDefault()
 }
 
 type logger struct {
-	handler slog.Handler
-	slog    *slog.Logger
-	depth   int
-	ctx     context.Context
-	err     error
+	handler  slog.Handler
+	slog     *slog.Logger
+	depth    int
+	ctx      context.Context
+	escalate bool
+	err      error
 }
 
 func NewLogger(handler slog.Handler) (logger, error) {
@@ -43,9 +45,10 @@ func NewDebugLogger() (logger, error) {
 
 func newLogger(handler slog.Handler) (logger, error) {
 	return logger{
-		handler: handler,
-		slog:    slog.New(handler),
-		ctx:     context.Background(),
+		handler:  handler,
+		slog:     slog.New(handler),
+		ctx:      context.Background(),
+		escalate: true,
 	}, nil
 }
 
@@ -130,6 +133,11 @@ func (l logger) WithError(err error) Logger {
 	return l
 }
 
+func (l logger) WithoutEscalation() Logger {
+	l.escalate = false
+	return l
+}
+
 func Trace(msg string, args ...any) {
 	defaultLogger.Trace(msg, args...)
 }
@@ -161,6 +169,9 @@ func WithError(err error) Logger {
 // It must always be called directly by an exported logging method
 // or function, because it uses a fixed call depth to obtain the pc.
 func (l logger) log(level slog.Level, msg string, args ...any) {
+	if l.escalate && l.err != nil && level < LevelError {
+		level = LevelError
+	}
 	if !l.handler.Enabled(l.ctx, level) {
 		return
 	}

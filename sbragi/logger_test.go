@@ -20,16 +20,22 @@ func TestLogger(t *testing.T) {
 		t.Error(err)
 		return
 	}
+	log.WithoutEscalation().WithError(fmt.Errorf("simple error 1")).Trace("test")
 	log.WithError(fmt.Errorf("simple error 1")).Trace("test")
 	log.Trace("test")
+	log.WithoutEscalation().WithError(fmt.Errorf("simple error 2")).Debug("test")
 	log.WithError(fmt.Errorf("simple error 2")).Debug("test")
 	log.Debug("test")
+	log.WithoutEscalation().WithError(fmt.Errorf("simple error 3")).Info("test")
 	log.WithError(fmt.Errorf("simple error 3")).Info("test")
 	log.Info("test")
+	log.WithoutEscalation().WithError(fmt.Errorf("simple error 4")).Notice("test")
 	log.WithError(fmt.Errorf("simple error 4")).Notice("test")
 	log.Notice("test")
+	log.WithoutEscalation().WithError(fmt.Errorf("simple error 5")).Warning("test")
 	log.WithError(fmt.Errorf("simple error 5")).Warning("test")
 	log.Warning("test")
+	log.WithoutEscalation().WithError(fmt.Errorf("simple error 6")).Error("test")
 	log.WithError(fmt.Errorf("simple error 6")).Error("test")
 	log.Error("test")
 	/*

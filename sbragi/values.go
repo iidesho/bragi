@@ -1,6 +1,6 @@
 package sbragi
 
-import "golang.org/x/exp/slog"
+import "log/slog"
 
 type RedactedString string
 

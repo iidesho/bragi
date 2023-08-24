@@ -44,6 +44,67 @@ func TestLogger(t *testing.T) {
 	*/
 }
 
+func TestDebugLogger(t *testing.T) {
+	dl, err := NewDebugLogger()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	dl.WithoutEscalation().WithError(fmt.Errorf("simple error 1")).Trace("test")
+	dl.WithError(fmt.Errorf("simple error 1")).Trace("test")
+	dl.Trace("test")
+	dl.WithoutEscalation().WithError(fmt.Errorf("simple error 2")).Debug("test")
+	dl.WithError(fmt.Errorf("simple error 2")).Debug("test")
+	dl.Debug("test")
+	dl.WithoutEscalation().WithError(fmt.Errorf("simple error 3")).Info("test")
+	dl.WithError(fmt.Errorf("simple error 3")).Info("test")
+	dl.Info("test")
+	dl.WithoutEscalation().WithError(fmt.Errorf("simple error 4")).Notice("test")
+	dl.WithError(fmt.Errorf("simple error 4")).Notice("test")
+	dl.Notice("test")
+	dl.WithoutEscalation().WithError(fmt.Errorf("simple error 5")).Warning("test")
+	dl.WithError(fmt.Errorf("simple error 5")).Warning("test")
+	dl.Warning("test")
+	dl.WithoutEscalation().WithError(fmt.Errorf("simple error 6")).Error("test")
+	dl.WithError(fmt.Errorf("simple error 6")).Error("test")
+	dl.Error("test")
+	/*
+		log.WithError(fmt.Errorf("simple error 7")).Fatal("test")
+		log.Fatal("test")
+	*/
+}
+
+func TestDefaultDebugLogger(t *testing.T) {
+	dl, err := NewDebugLogger()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	dl.SetDefault()
+	WithoutEscalation().WithError(fmt.Errorf("simple error 1")).Trace("test")
+	WithError(fmt.Errorf("simple error 1")).Trace("test")
+	Trace("test")
+	WithoutEscalation().WithError(fmt.Errorf("simple error 2")).Debug("test")
+	WithError(fmt.Errorf("simple error 2")).Debug("test")
+	Debug("test")
+	WithoutEscalation().WithError(fmt.Errorf("simple error 3")).Info("test")
+	WithError(fmt.Errorf("simple error 3")).Info("test")
+	Info("test")
+	WithoutEscalation().WithError(fmt.Errorf("simple error 4")).Notice("test")
+	WithError(fmt.Errorf("simple error 4")).Notice("test")
+	Notice("test")
+	WithoutEscalation().WithError(fmt.Errorf("simple error 5")).Warning("test")
+	WithError(fmt.Errorf("simple error 5")).Warning("test")
+	Warning("test")
+	WithoutEscalation().WithError(fmt.Errorf("simple error 6")).Error("test")
+	WithError(fmt.Errorf("simple error 6")).Error("test")
+	Error("test")
+	/*
+		log.WithError(fmt.Errorf("simple error 7")).Fatal("test")
+		log.Fatal("test")
+	*/
+}
+
 func BenchmarkLogger(b *testing.B) {
 	log, err := newLogger(slog.NewJSONHandler(os.Stdout, nil))
 	if err != nil {

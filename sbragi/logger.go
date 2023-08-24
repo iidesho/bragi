@@ -53,6 +53,7 @@ func newLogger(handler slog.Handler) (logger, error) {
 }
 
 func (l logger) SetDefault() {
+	l.depth++
 	defaultLogger = l
 }
 
@@ -163,6 +164,11 @@ func WithError(err error) Logger {
 	l := defaultLogger
 	l.depth--
 	return l.WithError(err)
+}
+func WithoutEscalation() Logger {
+	l := defaultLogger
+	l.depth--
+	return l.WithoutEscalation()
 }
 
 // log is the low-level logging method for methods that take ...any.

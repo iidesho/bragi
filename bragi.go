@@ -39,6 +39,9 @@ func (l Level) String() string {
 }
 
 func SetPrefix(p string) {
+	if p == "" {
+		return
+	}
 	prefix = p
 }
 
@@ -289,13 +292,13 @@ func NewLogFiles(path, jsonPath string) (hf *os.File, jf *os.File, err error) {
 
 func Rotate(path, jsonPath string) {
 	tf := time.Now().UTC().Format("2006-01-02T15:04:05")
-	oldName := humanf.Name()
+	oldName := fmt.Sprintf("%s/%s.log", path, prefix) //humanf.Name()
 	err := os.Rename(oldName, strings.Replace(oldName, ".log", fmt.Sprintf("-%s.log", tf), 1))
 	if err != nil {
 		AddError(err).Error("unable to move old human log file")
 		return
 	}
-	oldName = jsonf.Name()
+	oldName = fmt.Sprintf("%s/%s.log", jsonPath, prefix) //jsonf.Name()
 	err = os.Rename(oldName, strings.Replace(oldName, ".log", fmt.Sprintf("-%s.log", tf), 1))
 	if err != nil {
 		AddError(err).Error("unable to move old json log file")

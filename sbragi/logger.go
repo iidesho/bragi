@@ -2,6 +2,7 @@ package sbragi
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"os"
 	"runtime"
@@ -58,74 +59,32 @@ func (l logger) SetDefault() {
 }
 
 func (l logger) Trace(msg string, args ...any) {
-	if !l.handler.Enabled(nil, LevelTrace) {
-		return
-	}
-	if l.err != nil {
-		args = append([]any{"error", l.err}, args...)
-	}
 	l.log(LevelTrace, msg, args...)
 }
 
 func (l logger) Debug(msg string, args ...any) {
-	if !l.handler.Enabled(nil, LevelDebug) {
-		return
-	}
-	if l.err != nil {
-		args = append([]any{"error", l.err}, args...)
-	}
 	l.log(LevelDebug, msg, args...)
 }
 
 func (l logger) Info(msg string, args ...any) {
-	if !l.handler.Enabled(nil, LevelInfo) {
-		return
-	}
-	if l.err != nil {
-		args = append([]any{"error", l.err}, args...)
-	}
 	l.log(LevelInfo, msg, args...)
 }
 
 func (l logger) Notice(msg string, args ...any) {
-	if !l.handler.Enabled(nil, LevelNotice) {
-		return
-	}
-	if l.err != nil {
-		args = append([]any{"error", l.err}, args...)
-	}
 	l.log(LevelNotice, msg, args...)
 }
 
 func (l logger) Warning(msg string, args ...any) {
-	if !l.handler.Enabled(nil, LevelWarning) {
-		return
-	}
-	if l.err != nil {
-		args = append([]any{"error", l.err}, args...)
-	}
 	l.log(LevelWarning, msg, args...)
 }
 
 func (l logger) Error(msg string, args ...any) {
-	if !l.handler.Enabled(nil, LevelError) {
-		return
-	}
-	if l.err != nil {
-		args = append([]any{"error", l.err}, args...)
-	}
 	l.log(LevelError, msg, args...)
 }
 
 func (l logger) Fatal(msg string, args ...any) {
-	if !l.handler.Enabled(nil, LevelFatal) {
-		return
-	}
-	if l.err != nil {
-		args = append([]any{"error", l.err}, args...)
-	}
 	l.log(LevelFatal, msg, args...)
-	panic(msg)
+	panic(fmt.Sprint(msg, args))
 }
 
 func (l logger) WithError(err error) Logger {
@@ -180,6 +139,9 @@ func (l logger) log(level slog.Level, msg string, args ...any) {
 	}
 	if !l.handler.Enabled(l.ctx, level) {
 		return
+	}
+	if l.err != nil {
+		args = append([]any{"error", l.err}, args...)
 	}
 	var pc uintptr
 	var pcs [1]uintptr

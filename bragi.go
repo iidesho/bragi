@@ -287,36 +287,43 @@ func NewLogFiles(path, jsonPath string) (hf *os.File, jf *os.File, err error) {
 		hf.Close()
 		return
 	}
+	if humanf == nil {
+		humanf = hf
+	}
+	if jsonf == nil {
+		jsonf = jf
+	}
 	return
 }
 
-func Rotate(path, jsonPath string) {
+func Rotate(path, jsonPath string) (hf *os.File, jf *os.File, err error) {
 	tf := time.Now().UTC().Format("2006-01-02T15:04:05")
-	oldName := fmt.Sprintf("%s/%s.log", path, prefix) //humanf.Name()
-	err := os.Rename(oldName, strings.Replace(oldName, ".log", fmt.Sprintf("-%s.log", tf), 1))
+	oldName := humanf.Name() //fmt.Sprintf("%s/%s.log", path, prefix) //
+	err = os.Rename(oldName, strings.Replace(oldName, ".log", fmt.Sprintf("-%s.log", tf), 1))
 	if err != nil {
 		AddError(err).Error("unable to move old human log file")
 		return
 	}
-	oldName = fmt.Sprintf("%s/%s.log", jsonPath, prefix) //jsonf.Name()
+	oldName = jsonf.Name() //fmt.Sprintf("%s/%s.log", jsonPath, prefix) //
 	err = os.Rename(oldName, strings.Replace(oldName, ".log", fmt.Sprintf("-%s.log", tf), 1))
 	if err != nil {
 		AddError(err).Error("unable to move old json log file")
 		return
 	}
-	newHumanf, newJsonf, err := NewLogFiles(path, jsonPath)
+	hf, jf, err = NewLogFiles(path, jsonPath)
 	if err != nil {
 		AddError(err).Error("unable to create new logfiles")
 		return
 	}
 	oldHumanf := humanf
 	oldJsonf := jsonf
-	humanf = newHumanf
-	jsonf = newJsonf
+	humanf = hf
+	jsonf = jf
 	human.SetOutput(humanf)
 	json.SetOutput(jsonf)
 	oldHumanf.Close()
 	oldJsonf.Close()
+	return
 }
 
 func TruncateTale(path string) {

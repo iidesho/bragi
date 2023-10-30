@@ -99,9 +99,10 @@ func NewHandlerInFolder(path string) (h handler, err error) {
 			return a
 		},
 	}
+	jsonHandleOpt := handlerOpt
+	jsonHandleOpt.AddSource = true
 	h.human = slog.NewTextHandler(h.fileHuman, &handlerOpt)
-	handlerOpt.AddSource = true
-	h.json = slog.NewJSONHandler(h.fileJson, &handlerOpt)
+	h.json = slog.NewJSONHandler(h.fileJson, &jsonHandleOpt)
 	go func() {
 		nextDay := time.Now().UTC().AddDate(0, 0, 1)
 		nextDay = time.Date(nextDay.Year(), nextDay.Month(), nextDay.Day(), 0, 0, 0, 1, time.UTC)
@@ -128,16 +129,28 @@ func NewHandlerInFolder(path string) (h handler, err error) {
 					//Debug("skipping rotate as filesize is less than 24KB base2. size is: ", jsonStat.Size(), " < ", 24*MB)
 					continue
 				}
-				bragi.Rotate(path, h.folderJson)
+				h.fileHuman, h.fileJson, err = bragi.Rotate(path, h.folderJson)
+				if err != nil {
+					slog.Log(ctx, LevelFatal, "unable to rotate", "error", err.Error())
+					continue
+				}
+				h.human = slog.NewTextHandler(h.fileHuman, &handlerOpt)
+				h.json = slog.NewJSONHandler(h.fileJson, &jsonHandleOpt)
 			case <-rotateDayTicker.C:
-				//Debug("logger daily rotate ticker selected")
+				Debug("logger daily rotate ticker selected")
 				if firstDay {
 					firstDay = false
 					rotateDayTicker.Reset(24 * time.Hour)
 				}
-				bragi.Rotate(path, h.folderJson)
+				h.fileHuman, h.fileJson, err = bragi.Rotate(path, h.folderJson)
+				if err != nil {
+					slog.Log(ctx, LevelFatal, "unable to rotate", "error", err.Error())
+					continue
+				}
+				h.human = slog.NewTextHandler(h.fileHuman, &handlerOpt)
+				h.json = slog.NewJSONHandler(h.fileJson, &jsonHandleOpt)
 			case <-truncateTaleTicker:
-				//Debug("logger truncate ticker selected")
+				Debug("logger truncate ticker selected")
 				bragi.TruncateTale(h.folder)
 				bragi.TruncateTale(h.folderJson)
 			}

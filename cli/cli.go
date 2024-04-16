@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	log "github.com/cantara/bragi"
+	log "github.com/iidesho/bragi"
 )
 
 func main() {

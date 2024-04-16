@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cantara/bragi"
-	"github.com/cantara/bragi/sbragi/mergedcontext"
+	"github.com/iidesho/bragi"
+	"github.com/iidesho/bragi/sbragi/mergedcontext"
 )
 
 const (

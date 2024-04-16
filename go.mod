@@ -1,3 +1,3 @@
-module github.com/cantara/bragi
+module github.com/iidesho/bragi
 
 go 1.21

@@ -11,6 +11,10 @@ import (
 
 var defaultLogger, _ = NewLogger(slog.NewTextHandler(os.Stdout, nil))
 
+func DefaultLogger() Logger {
+	return defaultLogger
+}
+
 type Logger interface {
 	ErrorLogger
 	WithError(err error) ErrorLogger

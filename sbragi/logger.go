@@ -6,24 +6,37 @@ import (
 	"log/slog"
 	"os"
 	"runtime"
+	"strings"
 	"time"
 )
 
-var defaultLogger, _ = NewLogger(slog.NewTextHandler(os.Stdout, nil))
+var defaultLogger, _ = NewLogger(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+	AddSource:   false,
+	Level:       LevelInfo,
+	ReplaceAttr: ReplaceAttr,
+}))
 
-func DefaultLogger() Logger {
-	return defaultLogger
+func GetDefaultLogger() DefaultLogger {
+	return &defaultLogger
 }
 
-type Logger interface {
-	ErrorLogger
-	WithError(err error) ErrorLogger
-	WithErrorFunc(errf func() error) ErrorLogger
-	WithoutEscalation() Logger
-	SetDefault()
+type DefaultLogger interface {
+	BaseLogger
+	WithError(err error) BaseLogger
+	WithErrorFunc(errf func() error) BaseLogger
+	WithoutEscalation() ErrorLogger
+	WithLocalScope(defaultLevel slog.Level) ErrorLogger
 }
 
 type ErrorLogger interface {
+	BaseLogger
+	WithError(err error) BaseLogger
+	WithErrorFunc(errf func() error) BaseLogger
+	WithoutEscalation() ErrorLogger
+	SetDefault()
+}
+
+type BaseLogger interface {
 	Trace(msg string, args ...any) bool
 	Debug(msg string, args ...any) bool
 	Info(msg string, args ...any) bool
@@ -35,12 +48,14 @@ type ErrorLogger interface {
 
 type logger struct {
 	handler   slog.Handler
-	slog      *slog.Logger
-	depth     int
 	ctx       context.Context
-	escalate  bool
 	err       error
+	slog      *slog.Logger
 	errf      func() error
+	scope     string
+	level     slog.Level
+	depth     int
+	escalate  bool
 	withError bool
 }
 
@@ -50,8 +65,9 @@ func NewLogger(handler slog.Handler) (logger, error) {
 
 func NewDebugLogger() (logger, error) {
 	return NewLogger(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		AddSource: true,
-		Level:     LevelTrace,
+		AddSource:   true,
+		Level:       LevelTrace,
+		ReplaceAttr: ReplaceAttr,
 	}))
 }
 
@@ -99,21 +115,46 @@ func (l logger) Fatal(msg string, args ...any) {
 	}
 }
 
-func (l logger) WithError(err error) ErrorLogger {
+func (l logger) WithError(err error) BaseLogger {
 	l.err = err
 	l.withError = true
 	//l.depth--
 	return l
 }
-func (l logger) WithErrorFunc(errf func() error) ErrorLogger {
+func (l logger) WithErrorFunc(errf func() error) BaseLogger {
 	l.errf = errf
 	l.withError = true
 	//l.depth--
 	return l
 }
 
-func (l logger) WithoutEscalation() Logger {
+func (l logger) WithoutEscalation() ErrorLogger {
 	l.escalate = false
+	return l
+}
+
+func (l logger) WithLocalScope(defaultLevel slog.Level) ErrorLogger {
+	pc, _, _, ok := runtime.Caller(1 - l.depth) //This is a super ugly hack :/
+	details := runtime.FuncForPC(pc)
+	if !ok || details == nil {
+		Fatal("could not get runtime information about caller")
+	}
+	l.scope = strings.TrimSuffix(details.Name(), ".init")
+	l.level = defaultLevel
+	fmt.Printf("local scope:%s %s\n", LevelToString(defaultLevel), l.scope)
+	/*
+		frames := runtime.CallersFrames([]uintptr{pc})
+
+		// Loop to get frames.
+		// A fixed number of PCs can expand to an indefinite number of Frames.
+		frame, _ := frames.Next() //Ignoring more as we only care about caller
+		fuctionParts := strings.Split(frame.Function, ".")
+		fmt.Printf(
+			"function %s, package %s\n",
+			frame.Function,
+			strings.Join(fuctionParts[:len(fuctionParts)-1], "."),
+		)
+	*/
 	return l
 }
 
@@ -138,20 +179,25 @@ func Error(msg string, args ...any) bool {
 func Fatal(msg string, args ...any) {
 	defaultLogger.Fatal(msg, args...)
 }
-func WithError(err error) ErrorLogger {
+func WithError(err error) BaseLogger {
 	l := defaultLogger
 	l.depth--
 	return l.WithError(err)
 }
-func WithErrorFunc(errf func() error) ErrorLogger {
+func WithErrorFunc(errf func() error) BaseLogger {
 	l := defaultLogger
 	l.depth--
 	return l.WithErrorFunc(errf)
 }
-func WithoutEscalation() Logger {
+func WithoutEscalation() ErrorLogger {
 	l := defaultLogger
 	l.depth--
 	return l.WithoutEscalation()
+}
+func WithLocalScope(defaultLevel slog.Level) ErrorLogger {
+	l := defaultLogger
+	l.depth--
+	return l.WithLocalScope(defaultLevel)
 }
 
 // log is the low-level logging method for methods that take ...any.
@@ -173,6 +219,13 @@ func (l logger) log(level slog.Level, msg string, args ...any) (loggedError bool
 	}
 	if !l.handler.Enabled(l.ctx, level) {
 		return false
+	}
+	if l.scope != "" {
+		//return ealy if the loggers local level is higher than requested log level
+		if l.level > level {
+			return false
+		}
+		args = append([]any{"scope", l.scope}, args...)
 	}
 	if l.err != nil {
 		args = append([]any{"error", l.err}, args...)

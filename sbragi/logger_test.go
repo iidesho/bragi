@@ -1,21 +1,25 @@
-package sbragi
+package sbragi_test
 
 import (
 	"fmt"
 	"log/slog"
 	"os"
 	"testing"
+
+	"github.com/iidesho/bragi/sbragi"
 )
 
+var log = sbragi.WithLocalScope(sbragi.LevelDebug)
+
 func TestLogger(t *testing.T) {
-	h, err := NewHandlerInFolder("./log")
+	h, err := sbragi.NewHandlerInFolder("./log")
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	h.SetLevel(LevelTrace)
+	h.SetLevel(sbragi.LevelTrace)
 	defer h.Cancel()
-	log, err := NewLogger(&h)
+	log, err := sbragi.NewLogger(&h)
 	if err != nil {
 		t.Error(err)
 		return
@@ -44,8 +48,59 @@ func TestLogger(t *testing.T) {
 	*/
 }
 
+func TestPackageLevelLogger(t *testing.T) {
+	log.WithoutEscalation().WithError(fmt.Errorf("simple error 1")).Trace("test")
+	log.WithError(fmt.Errorf("simple error 1")).Trace("test")
+	log.Trace("test")
+	log.WithoutEscalation().WithError(fmt.Errorf("simple error 2")).Debug("test")
+	log.WithError(fmt.Errorf("simple error 2")).Debug("test")
+	log.Debug("test")
+	log.WithoutEscalation().WithError(fmt.Errorf("simple error 3")).Info("test")
+	log.WithError(fmt.Errorf("simple error 3")).Info("test")
+	log.Info("test")
+	log.WithoutEscalation().WithError(fmt.Errorf("simple error 4")).Notice("test")
+	log.WithError(fmt.Errorf("simple error 4")).Notice("test")
+	log.Notice("test")
+	log.WithoutEscalation().WithError(fmt.Errorf("simple error 5")).Warning("test")
+	log.WithError(fmt.Errorf("simple error 5")).Warning("test")
+	log.Warning("test")
+	log.WithoutEscalation().WithError(fmt.Errorf("simple error 6")).Error("test")
+	log.WithError(fmt.Errorf("simple error 6")).Error("test")
+	log.Error("test")
+	/*
+		log.WithError(fmt.Errorf("simple error 7")).Fatal("test")
+		log.Fatal("test")
+	*/
+}
+
+func TestPackageFunctionLevelLogger(t *testing.T) {
+	log := sbragi.GetDefaultLogger().WithLocalScope(sbragi.LevelNotice)
+	log.WithoutEscalation().WithError(fmt.Errorf("simple error 1")).Trace("test")
+	log.WithError(fmt.Errorf("simple error 1")).Trace("test")
+	log.Trace("test")
+	log.WithoutEscalation().WithError(fmt.Errorf("simple error 2")).Debug("test")
+	log.WithError(fmt.Errorf("simple error 2")).Debug("test")
+	log.Debug("test")
+	log.WithoutEscalation().WithError(fmt.Errorf("simple error 3")).Info("test")
+	log.WithError(fmt.Errorf("simple error 3")).Info("test")
+	log.Info("test")
+	log.WithoutEscalation().WithError(fmt.Errorf("simple error 4")).Notice("test")
+	log.WithError(fmt.Errorf("simple error 4")).Notice("test")
+	log.Notice("test")
+	log.WithoutEscalation().WithError(fmt.Errorf("simple error 5")).Warning("test")
+	log.WithError(fmt.Errorf("simple error 5")).Warning("test")
+	log.Warning("test")
+	log.WithoutEscalation().WithError(fmt.Errorf("simple error 6")).Error("test")
+	log.WithError(fmt.Errorf("simple error 6")).Error("test")
+	log.Error("test")
+	/*
+		log.WithError(fmt.Errorf("simple error 7")).Fatal("test")
+		log.Fatal("test")
+	*/
+}
+
 func TestDebugLogger(t *testing.T) {
-	dl, err := NewDebugLogger()
+	dl, err := sbragi.NewDebugLogger()
 	if err != nil {
 		t.Error(err)
 		return
@@ -75,30 +130,30 @@ func TestDebugLogger(t *testing.T) {
 }
 
 func TestDefaultDebugLogger(t *testing.T) {
-	dl, err := NewDebugLogger()
+	dl, err := sbragi.NewDebugLogger()
 	if err != nil {
 		t.Error(err)
 		return
 	}
 	dl.SetDefault()
-	WithoutEscalation().WithError(fmt.Errorf("simple error 1")).Trace("test")
-	WithError(fmt.Errorf("simple error 1")).Trace("test")
-	Trace("test")
-	WithoutEscalation().WithError(fmt.Errorf("simple error 2")).Debug("test")
-	WithError(fmt.Errorf("simple error 2")).Debug("test")
-	Debug("test")
-	WithoutEscalation().WithError(fmt.Errorf("simple error 3")).Info("test")
-	WithError(fmt.Errorf("simple error 3")).Info("test")
-	Info("test")
-	WithoutEscalation().WithError(fmt.Errorf("simple error 4")).Notice("test")
-	WithError(fmt.Errorf("simple error 4")).Notice("test")
-	Notice("test")
-	WithoutEscalation().WithError(fmt.Errorf("simple error 5")).Warning("test")
-	WithError(fmt.Errorf("simple error 5")).Warning("test")
-	Warning("test")
-	WithoutEscalation().WithError(fmt.Errorf("simple error 6")).Error("test")
-	WithError(fmt.Errorf("simple error 6")).Error("test")
-	Error("test")
+	sbragi.WithoutEscalation().WithError(fmt.Errorf("simple error 1")).Trace("test")
+	sbragi.WithError(fmt.Errorf("simple error 1")).Trace("test")
+	sbragi.Trace("test")
+	sbragi.WithoutEscalation().WithError(fmt.Errorf("simple error 2")).Debug("test")
+	sbragi.WithError(fmt.Errorf("simple error 2")).Debug("test")
+	sbragi.Debug("test")
+	sbragi.WithoutEscalation().WithError(fmt.Errorf("simple error 3")).Info("test")
+	sbragi.WithError(fmt.Errorf("simple error 3")).Info("test")
+	sbragi.Info("test")
+	sbragi.WithoutEscalation().WithError(fmt.Errorf("simple error 4")).Notice("test")
+	sbragi.WithError(fmt.Errorf("simple error 4")).Notice("test")
+	sbragi.Notice("test")
+	sbragi.WithoutEscalation().WithError(fmt.Errorf("simple error 5")).Warning("test")
+	sbragi.WithError(fmt.Errorf("simple error 5")).Warning("test")
+	sbragi.Warning("test")
+	sbragi.WithoutEscalation().WithError(fmt.Errorf("simple error 6")).Error("test")
+	sbragi.WithError(fmt.Errorf("simple error 6")).Error("test")
+	sbragi.Error("test")
 	/*
 		log.WithError(fmt.Errorf("simple error 7")).Fatal("test")
 		log.Fatal("test")
@@ -106,7 +161,7 @@ func TestDefaultDebugLogger(t *testing.T) {
 }
 
 func BenchmarkLogger(b *testing.B) {
-	log, err := newLogger(slog.NewJSONHandler(os.Stdout, nil))
+	log, err := sbragi.NewLogger(slog.NewJSONHandler(os.Stdout, nil))
 	if err != nil {
 		b.Error(err)
 		return
@@ -117,13 +172,13 @@ func BenchmarkLogger(b *testing.B) {
 }
 
 func BenchmarkLoggerWHandler(b *testing.B) {
-	h, err := NewHandlerInFolder("./log")
+	h, err := sbragi.NewHandlerInFolder("./log")
 	if err != nil {
 		b.Error(err)
 		return
 	}
 	defer h.Cancel()
-	log, err := newLogger(&h)
+	log, err := sbragi.NewLogger(&h)
 	if err != nil {
 		b.Error(err)
 		return

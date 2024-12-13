@@ -141,7 +141,7 @@ func (l logger) WithLocalScope(defaultLevel slog.Level) ErrorLogger {
 	}
 	l.scope = strings.TrimSuffix(details.Name(), ".init")
 	l.level = defaultLevel
-	fmt.Printf("local scope:%s %s\n", LevelToString(defaultLevel), l.scope)
+	l.Debug("local scope added", "level", LevelToString(defaultLevel), "scope", l.scope)
 	/*
 		frames := runtime.CallersFrames([]uintptr{pc})
 

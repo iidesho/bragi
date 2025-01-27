@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/iidesho/bragi/sbragi"
 )
@@ -127,6 +128,30 @@ func TestDebugLogger(t *testing.T) {
 		log.WithError(fmt.Errorf("simple error 7")).Fatal("test")
 		log.Fatal("test")
 	*/
+}
+
+func TestDynamicLogLevel(t *testing.T) {
+	log := sbragi.GetDefaultLogger().WithLocalScope(sbragi.LevelInfo)
+	f, err := os.CreateTemp(".", "scope_levels-*.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+	sbragi.AttachDynamicScopes(f.Name())
+	log.Info("attacked dynamic scope", "path", f.Name())
+	log.Debug("testing before file change")
+	f.WriteString("github.com/iidesho/bragi: debug\n")
+	for i := range 15 {
+		log.Debug("file changed, waiting for change to take effect", "i", i)
+		time.Sleep(time.Microsecond * 10)
+	}
+	log.Info("15 debug messages printed")
+	f.WriteString("github.com/iidesho/bragi/sbragi_test: error\n")
+	for i := range 10 {
+		log.Debug("file changed, waiting for change to take effect", "i", i)
+		time.Sleep(time.Microsecond * 10)
+	}
+	log.Error("10 debug messages printed")
 }
 
 func TestDefaultDebugLogger(t *testing.T) {

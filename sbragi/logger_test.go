@@ -131,7 +131,7 @@ func TestDebugLogger(t *testing.T) {
 }
 
 func TestDynamicLogLevel(t *testing.T) {
-	log := sbragi.GetDefaultLogger().WithLocalScope(sbragi.LevelInfo)
+	log := sbragi.WithLocalScope(sbragi.LevelInfo)
 	f, err := os.CreateTemp(".", "scope_levels-*.txt")
 	if err != nil {
 		t.Fatal(err)

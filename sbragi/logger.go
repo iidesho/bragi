@@ -145,6 +145,11 @@ func (l logger) Fatal(msg string, args ...any) {
 func (l logger) WithError(err error) BaseLogger {
 	l.err = err
 	l.withError = true
+	/*
+		if l.scope == "" {
+			l.depth--
+		}
+	*/
 	// l.depth--
 	return l
 }
@@ -152,6 +157,11 @@ func (l logger) WithError(err error) BaseLogger {
 func (l logger) WithErrorFunc(errf func() error) BaseLogger {
 	l.errf = errf
 	l.withError = true
+	/*
+		if l.scope == "" {
+			l.depth--
+		}
+	*/
 	// l.depth--
 	return l
 }
@@ -170,7 +180,7 @@ func (l logger) WithLocalScope(defaultLevel slog.Level) ErrorLogger {
 	l.scope = strings.TrimSuffix(details.Name(), ".init")
 	l.level = defaultLevel
 	l.Trace("local scope added", "level", LevelToString(defaultLevel), "scope", l.scope)
-	l.depth++
+	//l.depth++
 	/*
 		frames := runtime.CallersFrames([]uintptr{pc})
 
@@ -297,7 +307,7 @@ func WithoutEscalation() ErrorLogger {
 
 func WithLocalScope(defaultLevel slog.Level) ErrorLogger {
 	l := defaultLogger
-	l.depth--
+	// l.depth--
 	return l.WithLocalScope(defaultLevel)
 }
 
@@ -318,7 +328,7 @@ func (l logger) log(level slog.Level, msg string, args ...any) (hadError bool) {
 			level = LevelError
 		}
 	} else {
-		if level >= LevelError && l.withError || l.escalate && l.withError {
+		if level >= LevelNotice && l.withError || l.escalate && l.withError {
 			return // false // Return early if level is error and there was no error
 		}
 	}

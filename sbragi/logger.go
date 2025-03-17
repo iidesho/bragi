@@ -43,6 +43,7 @@ type ErrorLogger interface {
 type BaseLogger interface {
 	Trace(msg string, args ...any) bool
 	Debug(msg string, args ...any) bool
+	Printf(format string, args ...any)
 	Info(msg string, args ...any) bool
 	Notice(msg string, args ...any) bool
 	Warning(msg string, args ...any) bool
@@ -116,6 +117,10 @@ func (l logger) Debug(msg string, args ...any) bool {
 	return l.log(LevelDebug, msg, args...)
 }
 
+func (l logger) Printf(format string, args ...any) {
+	l.log(LevelInfo, fmt.Sprintf(format, args...))
+}
+
 func (l logger) Info(msg string, args ...any) bool {
 	return l.log(LevelInfo, msg, args...)
 }
@@ -172,7 +177,11 @@ func (l logger) WithoutEscalation() ErrorLogger {
 }
 
 func (l logger) WithLocalScope(defaultLevel slog.Level) ErrorLogger {
-	pc, _, _, ok := runtime.Caller(1 - l.depth) // This is a super ugly hack :/
+	return l.withLocalScope(defaultLevel)
+}
+
+func (l logger) withLocalScope(defaultLevel slog.Level) ErrorLogger {
+	pc, _, _, ok := runtime.Caller(2) // This is a super ugly hack :/
 	details := runtime.FuncForPC(pc)
 	if !ok || details == nil {
 		Fatal("could not get runtime information about caller")
@@ -308,7 +317,7 @@ func WithoutEscalation() ErrorLogger {
 func WithLocalScope(defaultLevel slog.Level) ErrorLogger {
 	l := defaultLogger
 	// l.depth--
-	return l.WithLocalScope(defaultLevel)
+	return l.withLocalScope(defaultLevel)
 }
 
 // log is the low-level logging method for methods that take ...any.

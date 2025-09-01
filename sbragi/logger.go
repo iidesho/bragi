@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/fsnotify/fsnotify"
+	contextkeys "github.com/iidesho/gober/contextKeys"
 )
 
 // Using debug logger as default logger as we use scopes for granulaity
@@ -351,8 +352,10 @@ func (l logger) log(level slog.Level, msg string, args ...any) (hadError bool) {
 	if !l.handler.Enabled(l.ctx, level) {
 		return // false
 	}
-	if tid := l.ctx.Value(ContextKeyTraceID); tid != nil {
-		args = append([]any{string(ContextKeyTraceID), tid}, args...)
+	for _, ctxKey := range contextkeys.Keys {
+		if tid := l.ctx.Value(ctxKey); tid != nil {
+			args = append([]any{ctxKey.String(), tid}, args...)
+		}
 	}
 	if l.scope != "" {
 		// return ealy if the loggers local scope reauires a higher level than requested
@@ -384,7 +387,3 @@ func (l logger) log(level slog.Level, msg string, args ...any) (hadError bool) {
 	_ = l.handler.Handle(l.ctx, r)
 	return
 }
-
-type ContextKey string
-
-const ContextKeyTraceID ContextKey = "trace_id"

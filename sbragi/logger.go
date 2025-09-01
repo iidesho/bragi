@@ -15,6 +15,7 @@ import (
 
 	"github.com/fsnotify/fsnotify"
 	contextkeys "github.com/iidesho/gober/contextKeys"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // Using debug logger as default logger as we use scopes for granulaity
@@ -351,6 +352,16 @@ func (l logger) log(level slog.Level, msg string, args ...any) (hadError bool) {
 	}
 	if !l.handler.Enabled(l.ctx, level) {
 		return // false
+	}
+	spanCTX := trace.SpanContextFromContext(l.ctx)
+	if spanCTX.IsValid() {
+		args = append(
+			args,
+			"trace_id",
+			spanCTX.TraceID().String(),
+			"span_id",
+			spanCTX.SpanID().String(),
+		)
 	}
 	for _, ctxKey := range contextkeys.Keys {
 		if tid := l.ctx.Value(ctxKey); tid != nil {

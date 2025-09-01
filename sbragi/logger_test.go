@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/iidesho/bragi/sbragi"
+	contextkeys "github.com/iidesho/gober/contextKeys"
 )
 
 var log = sbragi.WithLocalScope(sbragi.LevelDebug)
@@ -26,12 +27,11 @@ func TestLogger(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	ctx := context.WithValue(context.Background(), sbragi.ContextKeyTraceID, "testVal")
+	ctx := context.WithValue(context.Background(), contextkeys.TraceID, "testVal")
 	log.WithContext(ctx).WithoutEscalation().WithError(fmt.Errorf("simple error 1")).Trace("test")
 	log.WithContext(ctx).WithoutEscalation().WithError(fmt.Errorf("simple error 1")).Trace("test")
 	log.WithContext(ctx).WithError(fmt.Errorf("simple error 1")).Trace("test")
 	log.WithContext(ctx).Trace("test")
-	t.Fatal(ctx)
 	log.WithoutEscalation().WithError(fmt.Errorf("simple error 2")).Debug("test")
 	log.WithError(fmt.Errorf("simple error 2")).Debug("test")
 	log.Debug("test")
@@ -54,12 +54,11 @@ func TestLogger(t *testing.T) {
 }
 
 func TestPackageLevelLogger(t *testing.T) {
-	ctx := context.WithValue(context.Background(), sbragi.ContextKeyTraceID, "testVal")
+	ctx := context.WithValue(context.Background(), contextkeys.TraceID, "testVal")
 	log.WithContext(ctx).WithoutEscalation().WithError(fmt.Errorf("simple error 1")).Trace("test")
 	log.WithContext(ctx).WithoutEscalation().WithError(fmt.Errorf("simple error 1")).Trace("test")
 	log.WithContext(ctx).WithError(fmt.Errorf("simple error 1")).Trace("test")
 	log.WithContext(ctx).Trace("test")
-	t.Fatal(ctx)
 	log.WithoutEscalation().WithError(fmt.Errorf("simple error 2")).Debug("test")
 	log.WithError(fmt.Errorf("simple error 2")).Debug("test")
 	log.Debug("test")

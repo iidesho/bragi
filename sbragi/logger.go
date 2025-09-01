@@ -26,11 +26,13 @@ func GetDefaultLogger() DefaultLogger {
 }
 
 type DefaultLogger interface {
-	BaseLogger
-	WithError(err error) BaseLogger
-	WithErrorFunc(errf func() error) BaseLogger
-	WithoutEscalation() ErrorLogger
-	WithLocalScope(defaultLevel slog.Level) ErrorLogger
+	ContextLogger
+	WithLocalScope(defaultLevel slog.Level) ContextLogger
+}
+
+type ContextLogger interface {
+	ErrorLogger
+	WithContext(ctx context.Context) ErrorLogger
 }
 
 type ErrorLogger interface {
@@ -97,7 +99,7 @@ func newLogger(handler slog.Handler) (logger, error) {
 	return logger{
 		handler:   handler,
 		slog:      slog.New(handler),
-		ctx:       context.Background(),
+		ctx:       context.Background(), // This is just a temporaty context
 		escalate:  true,
 		scopes:    &scopes,
 		scopesMut: &sync.RWMutex{},
@@ -147,6 +149,11 @@ func (l logger) Fatal(msg string, args ...any) {
 	}
 }
 
+func (l logger) WithContext(ctx context.Context) ErrorLogger {
+	l.ctx = ctx
+	return l
+}
+
 func (l logger) WithError(err error) BaseLogger {
 	l.err = err
 	l.withError = true
@@ -176,11 +183,11 @@ func (l logger) WithoutEscalation() ErrorLogger {
 	return l
 }
 
-func (l logger) WithLocalScope(defaultLevel slog.Level) ErrorLogger {
+func (l logger) WithLocalScope(defaultLevel slog.Level) ContextLogger {
 	return l.withLocalScope(defaultLevel)
 }
 
-func (l logger) withLocalScope(defaultLevel slog.Level) ErrorLogger {
+func (l logger) withLocalScope(defaultLevel slog.Level) ContextLogger {
 	pc, _, _, ok := runtime.Caller(2) // This is a super ugly hack :/
 	details := runtime.FuncForPC(pc)
 	if !ok || details == nil {
@@ -314,7 +321,7 @@ func WithoutEscalation() ErrorLogger {
 	return l.WithoutEscalation()
 }
 
-func WithLocalScope(defaultLevel slog.Level) ErrorLogger {
+func WithLocalScope(defaultLevel slog.Level) ContextLogger {
 	l := defaultLogger
 	// l.depth--
 	return l.withLocalScope(defaultLevel)
@@ -343,6 +350,9 @@ func (l logger) log(level slog.Level, msg string, args ...any) (hadError bool) {
 	}
 	if !l.handler.Enabled(l.ctx, level) {
 		return // false
+	}
+	if tid := l.ctx.Value(ContextKeyTraceID); tid != nil {
+		args = append([]any{string(ContextKeyTraceID), tid}, args...)
 	}
 	if l.scope != "" {
 		// return ealy if the loggers local scope reauires a higher level than requested
@@ -374,3 +384,7 @@ func (l logger) log(level slog.Level, msg string, args ...any) (hadError bool) {
 	_ = l.handler.Handle(l.ctx, r)
 	return
 }
+
+type ContextKey string
+
+const ContextKeyTraceID ContextKey = "trace_id"

@@ -1,6 +1,7 @@
 package sbragi_test
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"os"
@@ -25,9 +26,12 @@ func TestLogger(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	log.WithoutEscalation().WithError(fmt.Errorf("simple error 1")).Trace("test")
-	log.WithError(fmt.Errorf("simple error 1")).Trace("test")
-	log.Trace("test")
+	ctx := context.WithValue(context.Background(), sbragi.ContextKeyTraceID, "testVal")
+	log.WithContext(ctx).WithoutEscalation().WithError(fmt.Errorf("simple error 1")).Trace("test")
+	log.WithContext(ctx).WithoutEscalation().WithError(fmt.Errorf("simple error 1")).Trace("test")
+	log.WithContext(ctx).WithError(fmt.Errorf("simple error 1")).Trace("test")
+	log.WithContext(ctx).Trace("test")
+	t.Fatal(ctx)
 	log.WithoutEscalation().WithError(fmt.Errorf("simple error 2")).Debug("test")
 	log.WithError(fmt.Errorf("simple error 2")).Debug("test")
 	log.Debug("test")
@@ -50,9 +54,12 @@ func TestLogger(t *testing.T) {
 }
 
 func TestPackageLevelLogger(t *testing.T) {
-	log.WithoutEscalation().WithError(fmt.Errorf("simple error 1")).Trace("test")
-	log.WithError(fmt.Errorf("simple error 1")).Trace("test")
-	log.Trace("test")
+	ctx := context.WithValue(context.Background(), sbragi.ContextKeyTraceID, "testVal")
+	log.WithContext(ctx).WithoutEscalation().WithError(fmt.Errorf("simple error 1")).Trace("test")
+	log.WithContext(ctx).WithoutEscalation().WithError(fmt.Errorf("simple error 1")).Trace("test")
+	log.WithContext(ctx).WithError(fmt.Errorf("simple error 1")).Trace("test")
+	log.WithContext(ctx).Trace("test")
+	t.Fatal(ctx)
 	log.WithoutEscalation().WithError(fmt.Errorf("simple error 2")).Debug("test")
 	log.WithError(fmt.Errorf("simple error 2")).Debug("test")
 	log.Debug("test")
